@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Panel | Titan Barber</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f6f8;
+            color: #333;
+        }
+
+        .dashboard-header {
+            background: #1a1a1a;
+            color: white;
+            padding: 20px 0;
+        }
+
+        .dashboard-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .welcome-text {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .dash-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dash-card h3 {
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .reserva-item {
+            border-left: 4px solid #D4AF37;
+            background: #fafafa;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .reserva-item.cancelada {
+            border-left-color: #dc3545;
+            opacity: 0.7;
+        }
+
+        .reserva-item.modificada {
+            border-left-color: #0dcaf0;
+        }
+
+        .reserva-item p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .reserva-item strong {
+            display: inline-block;
+            width: 100px;
+        }
+
+        .badge-estado {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-activa {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-cancelada {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-modificada {
+            background: #cff4fc;
+            color: #055160;
+        }
+
+        .action-btns {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-edit {
+            background: #17a2b8;
+        }
+
+        .btn-cancel {
+            background: #dc3545;
+        }
+
+        .btn-rebook {
+            background: #D4AF37;
+        }
+
+        /* Modal for editing */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="dashboard-header">
+        <div class="dashboard-nav">
+            <div class="logo">Titan<span>Barber</span></div>
+            <div>
+                <a href="barberia.html" class="btn" style="background: transparent; border: 1px solid #D4AF37;">Ir
+                    Atrás</a>
+                <button id="btn-logout" class="btn" style="background:#dc3545; border-color:#dc3545;">Cerrar
+                    Sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <h1 class="welcome-text">Hola, <span id="user-name">Usuario</span> 👋</h1>
+
+        <div class="card-grid">
+            <div class="dash-card" style="grid-column: 1 / -1;">
+                <h3><i class="fas fa-calendar-alt"></i> Mis Citas</h3>
+                <div id="citas-container">
+                    <p>Cargando tus citas...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Editar Cita -->
+    <div id="modal-editar" class="modal">
+        <div class="modal-content">
+            <h3>Reprogramar Cita</h3>
+            <p>Selecciona una nueva fecha (debe ser con al menos 24 horas de antelación):</p>
+            <input type="date" id="nueva-fecha">
+            <input type="hidden" id="edit-reserva-id">
+            <div class="action-btns">
+                <button class="btn btn-rebook" style="width: 100%;" onclick="guardarEdicion()">Guardar Cambios</button>
+                <button class="btn btn-cancel" style="width: 100%;"
+                    onclick="document.getElementById('modal-editar').style.display='none'">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Verificar sesión
+            const resSess = await fetch('sesion.php');
+            const sessionData = await resSess.json();
+
+            if (!sessionData.autenticado) {
+                alert("Debes iniciar sesión para ver tu panel.");
+                window.location.href = 'barberia.html';
+                return;
+            }
+
+            document.getElementById('user-name').textContent = sessionData.nombre;
+            cargarHistorial();
+
+            document.getElementById('btn-logout').addEventListener('click', async () => {
+                await fetch('logout.php');
+                window.location.href = 'barberia.html';
+            });
+        });
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag]));
+        }
+
+        async function cargarHistorial() {
+            const res = await fetch('obtener_historial.php');
+            const data = await res.json();
+            const container = document.getElementById('citas-container');
+
+            if (data.reservas && data.reservas.length > 0) {
+                container.innerHTML = '';
+                data.reservas.forEach(reserva => {
+                    const div = document.createElement('div');
+                    let classEstado = reserva.estado.toLowerCase();
+                    let badgeClass = `badge-${classEstado}`;
+
+                    div.className = `reserva-item ${classEstado}`;
+
+                    // Asegurar que no haya XSS escapando los datos
+                    const eBarbero = escapeHTML(reserva.barbero);
+                    const eServicio = escapeHTML(reserva.servicio);
+                    const eProducto = escapeHTML(reserva.producto);
+                    const eEstado = escapeHTML(reserva.estado);
+                    const eFecha = escapeHTML(reserva.fecha);
+
+                    div.innerHTML = `
+                        <span class="badge-estado ${badgeClass}">${eEstado}</span>
+                        <p><strong>Fecha:</strong> ${eFecha}</p>
+                        <p><strong>Barbero:</strong> ${eBarbero}</p>
+                        <p><strong>Servicio:</strong> ${eServicio}</p>
+                        <p><strong>Producto:</strong> ${eProducto}</p>
+                        <div class="action-btns" id="actions-${reserva.id}">
+                        </div>
+                    `;
+
+                    container.appendChild(div);
+
+                    const actionContainer = div.querySelector(`#actions-${reserva.id}`);
+
+                    if (reserva.estado !== 'Cancelada') {
+                        const btnEdit = document.createElement('button');
+                        btnEdit.className = 'btn-small btn-edit';
+                        btnEdit.innerHTML = '<i class="fas fa-edit"></i> Modificar';
+                        btnEdit.onclick = () => abrirEdicion(reserva.id, reserva.fecha);
+                        actionContainer.appendChild(btnEdit);
+
+                        const btnCancel = document.createElement('button');
+                        btnCancel.className = 'btn-small btn-cancel';
+                        btnCancel.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+                        btnCancel.onclick = () => cancelarCita(reserva.id);
+                        actionContainer.appendChild(btnCancel);
+                    }
+
+                    const btnRebook = document.createElement('button');
+                    btnRebook.className = 'btn-small btn-rebook';
+                    btnRebook.innerHTML = '<i class="fas fa-redo"></i> Volver a Reservar';
+                    btnRebook.onclick = () => volverAReservar(reserva.barbero, reserva.servicio, reserva.producto);
+                    actionContainer.appendChild(btnRebook);
+                });
+            } else {
+                container.innerHTML = '<p>No tienes citas agendadas aún. <a href="barberia.html#contacto" style="color:#D4AF37;">Agenda una ahora</a>.</p>';
+            }
+        }
+
+        function abrirEdicion(id, fechaActual) {
+            document.getElementById('edit-reserva-id').value = id;
+            document.getElementById('nueva-fecha').value = fechaActual;
+            document.getElementById('modal-editar').style.display = 'flex';
+        }
+
+        async function guardarEdicion() {
+            const id = document.getElementById('edit-reserva-id').value;
+            const nuevaFecha = document.getElementById('nueva-fecha').value;
+
+            if (!nuevaFecha) return alert("Selecciona una fecha");
+
+            const res = await fetch('modificar_reserva.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reserva_id: id, accion: 'modificar', nueva_fecha: nuevaFecha })
+            });
+            const data = await res.json();
+
+            alert(data.mensaje);
+            if (res.ok) {
+                document.getElementById('modal-editar').style.display = 'none';
+                cargarHistorial();
+            }
+        }
+
+        async function cancelarCita(id) {
+            if (!confirm("¿Estás seguro de que quieres cancelar esta cita?")) return;
+
+            const res = await fetch('modificar_reserva.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reserva_id: id, accion: 'cancelar' })
+            });
+            const data = await res.json();
+
+            alert(data.mensaje);
+            if (res.ok) cargarHistorial();
+        }
+
+        function volverAReservar(barbero, servicio, producto) {
+            // Guardar en sessionStorage para autollenar al volver a barberia.html
+            sessionStorage.setItem('rebook_barbero', barbero);
+            sessionStorage.setItem('rebook_servicio', servicio);
+            sessionStorage.setItem('rebook_producto', producto);
+            window.location.href = 'barberia.html#contacto';
+        }
+    </script>
+</body>
+
+</html>
